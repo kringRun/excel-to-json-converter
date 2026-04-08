@@ -1,10 +1,8 @@
-
-# 创建GitHub Actions工作流文件
-github_workflow = '''name: Build EXE
+name: Build Windows EXE
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
@@ -12,32 +10,34 @@ jobs:
     runs-on: windows-latest
     
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v4
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
-        python-version: '3.10'
-    
+        python-version: '3.11'
+        
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install pyinstaller
         pip install -r requirements.txt
+      shell: cmd
     
-    - name: Build EXE
+    - name: Build EXE with PyInstaller
       run: |
-        pyinstaller --onefile --windowed --name "Excel转JSON工具" excel_to_json_converter.py
+        pyinstaller --onefile --windowed --name "Excel转JSON工具" --clean --noconfirm excel_to_json_converter.py
+      shell: cmd
     
-    - name: Upload artifact
-      uses: actions/upload-artifact@v3
+    - name: Check build output
+      run: |
+        dir dist\
+      shell: cmd
+    
+    - name: Upload EXE artifact
+      uses: actions/upload-artifact@v4
       with:
-        name: Excel转JSON工具
+        name: Excel转JSON工具-Windows
         path: dist/*.exe
-'''
-
-with open('/mnt/kimi/output/build.yml', 'w', encoding='utf-8') as f:
-    f.write(github_workflow)
-
-print("✅ GitHub Actions 工作流文件已创建: build.yml")
-print("\n请将此文件放入仓库的 .github/workflows/ 目录下")
+        retention-days: 30
